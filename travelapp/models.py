@@ -1,6 +1,5 @@
 import os
 import random
-from ckeditor.fields import RichTextField
 from django.db import models
 
 
@@ -18,7 +17,7 @@ class Category(models.Model):
 
     def __str__(self):
         if not self.parent:
-            return f"Нет родителя --> {self.name}"
+            return f"Category: {self.name}"
         else:
             return f"{self.parent} --> {self.name}"
 
@@ -37,7 +36,7 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    owner = models.ForeignKey('auth.User', related_name='Products', on_delete=models.CASCADE)
+    owner = models.ForeignKey('user.CustomUser', related_name='Products', on_delete=models.CASCADE)
 
     @staticmethod
     def get_filename_ext(filepath):
@@ -49,10 +48,10 @@ class Product(models.Model):
         return f'{self.category}-->{self.title}'
 
 
-class Post(models.Model):
-    title = models.CharField(max_length=100, blank=True)
-    body = models.TextField(blank=True)
-    owner = models.ForeignKey('auth.User', related_name='posts', on_delete=models.CASCADE)
+class Tour(models.Model):
+    title = models.CharField(max_length=100)
+    body = models.TextField(blank=False)
+    owner = models.ForeignKey('user.CustomUser', related_name='posts', on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='posts', null=True)
     preview = models.ImageField(upload_to='images/', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -68,7 +67,7 @@ class Post(models.Model):
 class PostImages(models.Model):
     title = models.CharField(max_length=200, blank=True)
     image = models.ImageField(upload_to='images/')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')
+    post = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='images')
 
     class Meta:
         verbose_name = 'image'
@@ -88,8 +87,8 @@ class PostImages(models.Model):
 
 
 class Comment(models.Model):
-    owner = models.ForeignKey('auth.user', related_name='comments', on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
+    owner = models.ForeignKey('user.CustomUser', related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey(Tour, related_name='comments', on_delete=models.CASCADE)
     body = models.TextField(blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -98,3 +97,31 @@ class Comment(models.Model):
         return f"{self.owner}-->{self.post}-->{self.created_at}-->{self.body[0:10]}"
 
 
+class Rating(models.Model):
+    owner = models.ForeignKey('user.CustomUser', related_name='rating', on_delete=models.CASCADE)
+    VALUE = (
+        ("1", "1"),
+        ("2", "2"),
+        ("3", "3"),
+        ("4", "4"),
+        ("5", "5"),
+    )
+
+    rating_field = models.CharField(choices=VALUE, max_length=1)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="rating")
+
+    def __str__(self):
+        return f"{self.rating_field} - {self.tour}-->{self.owner}"
+
+    class Meta:
+        verbose_name = 'Рейтинг'
+        verbose_name_plural = 'Рейтинги'
+
+
+class Like(models.Model):
+    owner = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='likes')
+    like = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.owner}-->{self.post}'

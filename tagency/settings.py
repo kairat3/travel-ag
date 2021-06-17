@@ -39,9 +39,13 @@ INSTALLED_APPS = [
 
 
     'travelapp',
+    'user',
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_yasg',
     'ckeditor_uploader',
+    'corsheaders',
+    'rest_auth',
 ]
 
 CKEDITOR_UPLOAD_PATH = 'uploads/'
@@ -91,7 +95,9 @@ DATABASES = {
     }
 }
 
-# AUTH_USER_MODEL = 'user.CustomUser'
+
+AUTH_USER_MODEL = 'user.CustomUser'
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -154,7 +160,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

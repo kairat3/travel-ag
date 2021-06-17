@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
-from .models import Post, Comment, Category, PostImages, Product
+from .models import Comment, Category, PostImages, Product, Tour, Like, Rating
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -60,15 +60,15 @@ class PostImageSerializer(serializers.ModelSerializer):
         exclude = ('id', )
 
 
-class PostSerializer(serializers.ModelSerializer):
+class TourSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     comments = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     category = CategorySerializer(many=False, read_only=True)
     images = PostImageSerializer(many=True, read_only=True)
 
     class Meta:
-        model = Post
-        fields = ('id', 'title', 'body', 'owner', 'comments', 'category', 'preview', 'images', 'likes')
+        model = Tour
+        fields = ('id', 'title', 'body', 'owner', 'comments', 'category', 'preview', 'images')
 
     def validate(self, attrs):
         print(attrs)
@@ -78,7 +78,7 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         # print("Файлы: ", request.FILES)
         images_data = request.FILES
-        created_post = Post.objects.create(**validated_data)
+        created_post = Tour.objects.create(**validated_data)
         print(created_post)
         print("worked: ", images_data.getlist)
         print("doesnt work: ", images_data)
@@ -93,7 +93,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
-    category = CategorySerializer(many=False, read_only=True)
+    # category = CategorySerializer(many=False, read_only=True)
     images = PostImageSerializer(many=True, read_only=True)
 
     class Meta:
@@ -105,10 +105,12 @@ class ProductSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
+        print(validated_data)
         request = self.context.get('request')
         # print("Файлы: ", request.FILES)
         images_data = request.FILES
-        created_product = Post.objects.create(**validated_data)
+        user = request.user
+        created_product = Product.objects.create(**validated_data)
         print(created_product)
         print("worked: ", images_data.getlist)
         print("doesnt work: ", images_data)
@@ -127,3 +129,29 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'body', 'owner', 'post')
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = Rating
+        fields = ('rating_field', 'owner', 'tour', )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['owner'] = instance.owner.email
+        return representation
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = Like
+        fields = ('owner', 'post', )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['owner'] = instance.owner.email
+        return representation
